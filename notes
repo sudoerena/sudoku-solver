@@ -1,0 +1,8 @@
+-- implement first a sudoku solver
+-- using a 2x2 array
+
+
+Generating
+-- supposed minimum of 17 clues
+-- check at each point?
+-- should start from a (randomized) full grid and subtract
