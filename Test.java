@@ -4,9 +4,9 @@ import java.io.*;
 
 public class Test {
     public static void main (String args[]) {
-        int x = 2;
-        int x0 = 3*(x/3);
-        System.out.println(x0);
+        for (int i=0; i<9; i++) {
+            System.out.print(i);
+        }
 
         /*
            String line = "1,2,3,4,5,6,7,8,9,";
