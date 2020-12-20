@@ -4,6 +4,10 @@ import java.io.*;
 
 public class Test {
     public static void main (String args[]) {
+        int x = 2;
+        int x0 = 3*(x/3);
+        System.out.println(x0);
+
         /*
            String line = "1,2,3,4,5,6,7,8,9,";
            System.out.println(line.indexOf(','));
@@ -13,6 +17,7 @@ public class Test {
            System.out.println("The integer is: " + num);
            */
 
+        /*
         try {
             File file = new File("test-file.txt");
             Scanner fsc = new Scanner(file);
@@ -31,5 +36,6 @@ public class Test {
                 System.out.println();
             }
         } catch (FileNotFoundException e) {}
+        */
     }
 }

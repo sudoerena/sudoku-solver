@@ -7,6 +7,7 @@ public class Main {
         Scanner sc = new Scanner(System.in);
 
         Solver slv = new Solver();
+        slv.solve();
         slv.print();
     }
 }
@@ -30,8 +31,109 @@ public class Solver {
 
     Puzzle solve () {
         // SOLVE puzzle and return value
+        /*
+         * 1. search for blank
+         * 2. check lines
+         * 3. check square
+         * 4. if only one valid, EDIT
+         *      else, return to 1.
+         */
+        int x = 0, y = 0;
+
+        while (true) {
+            int invalid[] = new int[10];
+
+            // check full (solved)
+            if (puzz.isFull()) {
+                break;
+            }
+
+            // get next blank space
+            int temp = x;
+            x = nextX(x, y);
+            y = nextY(temp, y);
+
+            // check horizontal
+            for (int j = 0; j < 9; j++) {
+                invalid[puzz.getGrid(x, j)] = 1;
+            }
+
+            // check vertical
+            for (int i = 0; i < 9; i++) {
+                invalid[puzz.getGrid(i, y)] = 1;
+            }
+
+            // check square
+            int x0 = 3*(x/3), y0 = 3*(y/3);
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    invalid[puzz.getGrid(i + x0, j + y0)] = 1;
+                }
+            }
+
+            // try to fill
+            tryFill(x, y, invalid);
+        }
 
         return puzz;
+    }
+
+    int nextX (int x, int y) {
+        do {
+            if (x == 8) {
+                x = 0;
+                if (y == 8) {
+                    y = 0;
+                }
+                else {
+                    y++;
+                }
+            }
+            else {
+                x++;
+            }
+        } while (puzz.getGrid(x, y) != 0);
+
+        return x;
+    }
+
+    int nextY (int x, int y) {
+        do {
+            if (x == 8) {
+                x = 0;
+                if (y == 8) {
+                    y = 0;
+                }
+                else {
+                    y++;
+                }
+            }
+            else {
+                x++;
+            }
+        } while (puzz.getGrid(x, y) != 0);
+
+        return y;
+    }
+
+    void tryFill (int x, int y, int in[]) {
+        int count = 0, val = 0;
+
+        // count valid numbers
+        for (int i = 1; i < 10; i++) {
+            if (in[i] == 0) {
+                val = i;
+                count++;
+            }
+        }
+
+        // more than one valid choice
+        if (count > 1) {
+            return;
+        }
+
+        puzz.putGrid(x, y, val);
+        return;
     }
 
     void print () {
@@ -79,5 +181,29 @@ public class Puzzle{
                 i++;
             }
         } catch (FileNotFoundException e) {}
+    }
+
+    void putGrid (int x, int y, int n) {
+        grid[x][y] = n;
+        return;
+    }
+
+    int getGrid (int x, int y) {
+        return this.grid[x][y];
+    }
+
+    boolean isFull () {
+        boolean full = true;
+
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                if (grid[i][j] == 0) {
+                    full = false;
+                    break;
+                }
+            }
+        }
+
+        return full;
     }
 }
