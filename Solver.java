@@ -73,6 +73,7 @@ public class Solver {
 
         int x = 0, y = 0, failed = 0;
         while (true) {
+            checkInvalid();
             // check full (solved)
             if (puzz.isFull()) {
                 if (puzz.isSolved()) {
@@ -100,6 +101,8 @@ public class Solver {
             if (puzz.getGrid(x, y) == 0) {
                 // try to fill
                 int success = tryFill(x, y);
+                updateInvalid();
+
                 if (success == -1) {
                     failed++;
 
@@ -120,8 +123,6 @@ public class Solver {
                                     invalid[x][y][i] = 1;
                                 }
                                 else {
-                                    //puzz.putGrid(x, y, i);
-                                    puzz = tryPuzz;
                                     return true;
                                 }
 
@@ -163,6 +164,18 @@ public class Solver {
                     for (int j = 0; j < 3; j++) {
                         invalid[i+3*x0][j+3*y0][puzz.getGrid(x, y)] = 1;
                     }
+                }
+            }
+        }
+    }
+
+    // DEBUG: check that invalid is right
+    void checkInvalid () {
+        for (int x = 0; x < 9; x++) {
+            for (int y = 0; y < 9; y++) {
+                for (int i = 0; i < 9; i++) {
+                    if (invalid[x][y][puzz.getGrid(x,y)] != 1)
+                        System.out.println("Failed");
                 }
             }
         }
@@ -244,7 +257,13 @@ public class Puzzle{
     }
 
     Puzzle (Puzzle puzz) {
-        this.grid = puzz.grid;
+        this.grid = new int[9][9];
+
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                this.grid[i][j] = puzz.grid[i][j];
+            }
+        }
     }
 
     Puzzle (String name) {
@@ -295,8 +314,16 @@ public class Puzzle{
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {
                 System.out.print(grid[i][j] + " ");
+
+                if (j == 2 || j == 5) {
+                    System.out.print("| ");
+                }
             }
             System.out.println();
+
+            if (i == 2 || i == 5) {
+                System.out.println("- - - + - - - + - - - ");
+            }
         }
     }
 
