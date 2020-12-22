@@ -41,12 +41,14 @@ public class Solver {
             System.out.print("Puzzle size: ");
             puzz = new Puzzle(sc.nextInt());
 
+            System.out.println("Enter number, or 0 for empty.");
             for (int i = 0; i < 9; i++) {
                 for (int j = 0; j < 9; j++) {
-                    System.out.printf("Enter #, or 0 for empty.\nR%d, C%d: ", i + 1, j + 1);
+                    System.out.printf("R%d, C%d: ", i + 1, j + 1);
                     puzz.putGrid(i, j, sc.nextInt());
                 }
             }
+            System.out.println();
         }
     }
 
