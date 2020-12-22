@@ -63,7 +63,7 @@ public class Solver {
         /*
          * v2:
          * IF BLANK:
-         * 1. tryFill()
+         * 1. tryCell()
          *
          * ELSE:
          * 1. add self to every row, col, box
@@ -73,11 +73,13 @@ public class Solver {
 
         int x = 0, y = 0, failed = 0;
         while (true) {
-            checkInvalid();
             // check full (solved)
             if (puzz.isFull()) {
                 if (puzz.isSolved()) {
                     System.out.println("Solved it!");
+                }
+                else {
+                    System.out.println("No solution found.");
                 }
                 break;
             }
@@ -97,19 +99,19 @@ public class Solver {
                 x++;
             }
 
-            // if blank cell
+            // if reached blank cell
             if (puzz.getGrid(x, y) == 0) {
                 // try to fill
-                int success = tryFill(x, y);
+                int success = tryCell(x, y);
                 updateInvalid();
 
+                // cannot determine value
                 if (success == -1) {
                     failed++;
 
                     // unchanged for many steps; trial and error
                     if (failed >= 1000) {
                         failed = 0;
-                        updateInvalid();
 
                         for (int i = 1; i < 10; i++) {
                             if (invalid[x][y][i] == 0) {
@@ -123,6 +125,7 @@ public class Solver {
                                     invalid[x][y][i] = 1;
                                 }
                                 else {
+                                    puzz.copy(tryPuzz);
                                     return true;
                                 }
 
@@ -131,29 +134,52 @@ public class Solver {
                         }
                     }
                 }
+                // invalid; abort
                 else if (success == -2) {
-                    System.out.println("Invalid result.");
                     return false;
                 }
+                // sucessfully filled
                 else {
                     failed = 0;
                     updateInvalid(x, y);
+
+                    for (int n = 1; n < 10; n++) {
+                        invalid[x][y][n] = 1;
+                    }
                 }
             }
-            // if filled cell
+            // if reached nonempty cell
             else {
                 updateInvalid(x, y);
+            }
+
+            // just entered new square
+            if (x%3 == 0 && y%3 == 0) {
+                trySquare(x, y);
+            }
+
+            // just entered new row (always)
+            tryRow(y);
+
+            // just entered new col
+            if (y == 0) {
+                tryCol(x);
             }
         }
 
         return true;
     }
 
+    // mark for each box:
+    //      column, row, square
     void updateInvalid () {
         for (int x = 0; x < 9; x++) {
             for (int y = 0; y < 9; y++) {
                 // mark horizontals and verticals
                 for (int i = 0; i < 9; i++) {
+                    if (puzz.getGrid(x, y) != 0) {
+                        invalid[x][y][i + 1] = 1;
+                    }
                     invalid[x][i][puzz.getGrid(x, y)] = 1;
                     invalid[i][y][puzz.getGrid(x, y)] = 1;
                 }
@@ -164,18 +190,6 @@ public class Solver {
                     for (int j = 0; j < 3; j++) {
                         invalid[i+3*x0][j+3*y0][puzz.getGrid(x, y)] = 1;
                     }
-                }
-            }
-        }
-    }
-
-    // DEBUG: check that invalid is right
-    void checkInvalid () {
-        for (int x = 0; x < 9; x++) {
-            for (int y = 0; y < 9; y++) {
-                for (int i = 0; i < 9; i++) {
-                    if (invalid[x][y][puzz.getGrid(x,y)] != 1)
-                        System.out.println("Failed");
                 }
             }
         }
@@ -218,7 +232,11 @@ public class Solver {
         }
     }
 
-    int tryFill (int x, int y) {
+    // fills puzz.grid[x][y] IF only one valid option exists there
+    //      otherwise,
+    //      if more exist, return -1
+    //      if none exist, return -2
+    int tryCell (int x, int y) {
         int count = 0, val = -1;
 
         // count valid numbers
@@ -243,6 +261,93 @@ public class Solver {
         // more than one valid choice
         return -1;
     }
+
+    // fills square around puzz.grid[x][y] 
+    // based on if only one cell can have n \in {1, 2, ... 9}
+    //      return 0 if succeeded
+    //      return -1 if none found
+    //  OR return how many were filled
+    int trySquare (int x, int y) {
+        int x0 = x / 3, y0 = y / 3, valid[][] = new int[9][3], status = -1;
+
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                for (int n = 0; n < 9; n++) {
+                    if (invalid[i+3*x0][j+3*y0][n + 1] == 0) {
+                        valid[n][0]++;
+                        valid[n][1] = i + 3*x0;
+                        valid[n][2] = j + 3*y0;
+                    }
+                }
+            }
+        }
+
+        // check for numbers where only one space is valid
+        for (int n = 0; n < 9; n++) {
+            if (valid[n][0] == 1 && puzz.getGrid(valid[n][1], valid[n][2]) == 0) {
+                puzz.putGrid(valid[n][1], valid[n][2], n + 1);
+                status = 0;
+            }
+        }
+
+        return status;
+    }
+
+    // fills puzz.grid[x][n]  for all 0 < n < 10
+    // based on if only one cell can have n \in {1, 2, ... 9}
+    //      return 0 if succeeded
+    //      return -1 if none found
+    //  OR return how many were filled
+    int tryCol (int x) {
+        int valid[][] = new int[9][2], status = -1;
+
+        for (int j = 0; j < 9; j++) {
+            for (int n = 0; n < 9; n++) {
+                if (invalid[x][j][n + 1] == 0) {
+                    valid[n][0]++;
+                    valid[n][1] = j;
+                }
+            }
+        }
+
+        // check for numbers where only one space is valid
+        for (int n = 0; n < 9; n++) {
+            if (valid[n][0] == 1) {
+                puzz.putGrid(x, valid[n][1], n + 1);
+                status = 0;
+            }
+        }
+
+        return status;
+    }
+
+    // fills puzz.grid[n][y]  for all 0 < n < 10
+    // based on if only one cell can have n \in {1, 2, ... 9}
+    //      return 0 if succeeded
+    //      return -1 if none found
+    //  OR return how many were filled
+    int tryRow (int y) {
+        int valid[][] = new int[9][2], status = -1;
+
+        for (int i = 0; i < 9; i++) {
+            for (int n = 0; n < 9; n++) {
+                if (invalid[i][y][n + 1] == 0) {
+                    valid[n][0]++;
+                    valid[n][1] = i;
+                }
+            }
+        }
+
+        // check for numbers where only one space is valid
+        for (int n = 0; n < 9; n++) {
+            if (valid[n][0] == 1) {
+                puzz.putGrid(valid[n][1], y, n + 1);
+                status = 0;
+            }
+        }
+
+        return status;
+    }
 }
 
 public class Puzzle{
@@ -259,11 +364,7 @@ public class Puzzle{
     Puzzle (Puzzle puzz) {
         this.grid = new int[9][9];
 
-        for (int i = 0; i < 9; i++) {
-            for (int j = 0; j < 9; j++) {
-                this.grid[i][j] = puzz.grid[i][j];
-            }
-        }
+        this.copy(puzz);
     }
 
     Puzzle (String name) {
@@ -386,5 +487,13 @@ public class Puzzle{
         }
 
         return true;
+    }
+
+    void copy (Puzzle puzz) {
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                this.grid[i][j] = puzz.grid[i][j];
+            }
+        }
     }
 }
