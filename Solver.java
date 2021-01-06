@@ -2,24 +2,12 @@ import java.util.*;
 import java.io.*;
 import java.lang.*;
 
-public class Main {
-    public static void main (String args[]) {
-        Scanner sc = new Scanner(System.in);
-
-        Solver slv = new Solver();
-        slv.solve();
-        slv.print();
-    }
-}
-
 public class Solver {
     Puzzle puzz;
     //int invalid[][][];
     int invalid[][][] = new int[9][9][10];
 
     Solver () {
-        //invalid = new int[9][9][10];
-
         Scanner sc = new Scanner(System.in);
         int in;
 
@@ -79,11 +67,12 @@ public class Solver {
             if (puzz.isFull()) {
                 if (puzz.isSolved()) {
                     System.out.println("Solved it!");
+                    return true;
                 }
                 else {
                     System.out.println("No solution found.");
+                    return false;
                 }
-                break;
             }
 
             // move to next space
@@ -105,7 +94,6 @@ public class Solver {
             if (puzz.getGrid(x, y) == 0) {
                 // try to fill
                 int success = tryCell(x, y);
-                updateInvalid();
 
                 // cannot determine value
                 if (success == -1) {
@@ -138,6 +126,7 @@ public class Solver {
                 }
                 // invalid; abort
                 else if (success == -2) {
+                    System.out.println("Invalid puzzle.");
                     return false;
                 }
                 // sucessfully filled
@@ -152,6 +141,7 @@ public class Solver {
             }
             // if reached nonempty cell
             else {
+                failed = 0;
                 updateInvalid(x, y);
             }
 
@@ -169,7 +159,7 @@ public class Solver {
             }
         }
 
-        return true;
+        //return true;
     }
 
     // mark for each box:
@@ -177,24 +167,13 @@ public class Solver {
     void updateInvalid () {
         for (int x = 0; x < 9; x++) {
             for (int y = 0; y < 9; y++) {
-                // mark horizontals and verticals
-                for (int i = 0; i < 9; i++) {
-                    if (puzz.getGrid(x, y) != 0) {
-                        invalid[x][y][i + 1] = 1;
-                    }
-                    invalid[x][i][puzz.getGrid(x, y)] = 1;
-                    invalid[i][y][puzz.getGrid(x, y)] = 1;
-                }
-
-                // mark box
-                int x0 = x / 3, y0 = y / 3;
-                for (int i = 0; i < 3; i++) {
-                    for (int j = 0; j < 3; j++) {
-                        invalid[i+3*x0][j+3*y0][puzz.getGrid(x, y)] = 1;
-                    }
+                if (puzz.getGrid(x, y) != 0) {
+                    updateInvalid(x, y);
                 }
             }
         }
+
+        return;
     }
 
     void updateInvalid (int x, int y) {
@@ -211,6 +190,15 @@ public class Solver {
                 invalid[i+3*x0][j+3*y0][puzz.getGrid(x, y)] = 1;
             }
         }
+
+        // if (x,y) is nonempty, all is invalid
+        if (puzz.getGrid(x, y) != 0) {
+            for (int n = 0; n < 10; n++) {
+                invalid[x][y][n] = 1;
+            }
+        }
+
+        return;
     }
 
     void printInvalid () {
@@ -232,6 +220,72 @@ public class Solver {
             }
             System.out.println();
         }
+    }
+
+    void checkInvalid () {
+        for (int x = 0; x < 9; x++) {
+            for (int y = 0; y < 9; y++) {
+                checkInvalid(x,y);
+            }
+        }
+
+        return;
+    }
+
+    void checkInvalid (int x, int y) {
+        boolean oop = true;
+
+        for (int n = 1; n < 10; n++) {
+            System.out.print(n + ": ");
+            if (invalid[x][y][n] == 1) {
+                System.out.print("(inv) ");
+                oop = false;
+                for (int i = 0; i < 9; i++) {
+                    if (puzz.getGrid(x,i) == n) {
+                        oop = true;
+                    }
+                    if (puzz.getGrid(i,y) == n) {
+                        oop = true;
+                    }
+                }
+
+                int x0 = x/3, y0 = y/3;
+                for (int i = 0; i < 3; i++) {
+                    for (int j = 0; j < 3; j++) {
+                        if (puzz.getGrid(3*x0+i, 3*y0+j) == n) {
+                            oop = true;
+                        }
+                    }
+                }
+
+                if (puzz.getGrid(x,y) != 0) {
+                    oop = true;
+                }
+            }
+            if (!oop) {
+                System.out.println(x + ", " + y + ": " + puzz.getGrid(x,y) + " with invalid " + n + "; wrong");
+                for (int i = 0; i < 9; i++) {
+                    System.out.print(puzz.getGrid(x,i));
+                }
+                System.out.println();
+                for (int i = 0; i < 9; i++) {
+                    System.out.print(puzz.getGrid(i,y));
+                }
+                System.out.println();
+                int x0 = x/3, y0 = y/3;
+                for (int i = 0; i < 3; i++) {
+                    for (int j = 0; j < 3; j++) {
+                        System.out.print(puzz.getGrid(3*x0+i, 3*y0+j));
+                    }
+                }
+                System.out.println();
+            }
+            else {
+                System.out.println("invalid is fine");
+            }
+        }
+
+        return;
     }
 
     // fills puzz.grid[x][y] IF only one valid option exists there
@@ -349,153 +403,5 @@ public class Solver {
         }
 
         return status;
-    }
-}
-
-public class Puzzle{
-    int grid[][];
-
-    Puzzle () {
-        grid = new int[9][9];
-    }
-
-    Puzzle (int num) {
-        grid = new int[num][num];
-    }
-
-    Puzzle (Puzzle puzz) {
-        this.grid = new int[9][9];
-
-        this.copy(puzz);
-    }
-
-    Puzzle (String name) {
-        grid = new int[9][9];
-        readFile(name);
-    }
-
-    private void readFile (String name) {
-        try {
-            File file = new File(name);
-            Scanner fsc = new Scanner(file);
-
-            int i = 0;
-            while (fsc.hasNextLine() && i < 9) {
-                String line = fsc.nextLine();
-
-                for (int j = 0; j < 9; j++) {
-                    grid[i][j] = Integer.parseInt(line.substring(0, line.indexOf('.')));
-                    // fix to deal with extra white space better
-                    line = line.substring(line.indexOf('.') + 1);
-                }
-                i++;
-            }
-        } catch (FileNotFoundException e) {}
-    }
-
-    void clear () {
-        for (int i = 0; i < 9; i++) {
-            for (int j = 0; j < 9; j++) {
-                grid[i][j] = 0;
-            }
-        }
-    }
-
-    boolean isBlank () {
-        for (int i = 0; i < 9; i++) {
-            for (int j = 0; j < 9; j++) {
-                if (grid[i][j] != 0) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    void print () {
-        for (int i = 0; i < 9; i++) {
-            for (int j = 0; j < 9; j++) {
-                System.out.print(grid[i][j] + " ");
-
-                if (j == 2 || j == 5) {
-                    System.out.print("| ");
-                }
-            }
-            System.out.println();
-
-            if (i == 2 || i == 5) {
-                System.out.println("- - - + - - - + - - - ");
-            }
-        }
-    }
-
-    void putGrid (int x, int y, int n) {
-        grid[x][y] = n;
-    }
-
-    int getGrid (int x, int y) {
-        return grid[x][y];
-    }
-
-    boolean isFull () {
-        for (int i = 0; i < 9; i++) {
-            for (int j = 0; j < 9; j++) {
-                if (grid[i][j] == 0) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    boolean isSolved () {
-        // check horizontals and verticals
-        for (int i = 0; i < 9; i++) {
-            int xs[] = new int[9], ys[] = new int[9];
-            for (int j = 0; j < 9; j++) {
-                if (xs[grid[i][j] - 1] == 1) {
-                    return false;
-                }
-                else {
-                    xs[grid[i][j] - 1] = 1;
-                }
-                if (ys[grid[j][i] - 1] == 1) {
-                    return false;
-                }
-                else {
-                    ys[grid[j][i] - 1] = 1;
-                }
-            }
-        }
-
-        // check boxes
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                int nums[] = new int[9];
-
-                for (int x = 0; x < 3; x++) {
-                    for (int y = 0; y < 3; y++) {
-                        if (nums[grid[3*i+x][3*j+y] - 1] == 1) {
-                            return false;
-                        }
-                        else {
-                            nums[grid[3*i+x][3*j+y] - 1] = 1;
-                        }
-                    }
-                }
-            }
-        }
-
-        return true;
-    }
-
-    void copy (Puzzle puzz) {
-        for (int i = 0; i < 9; i++) {
-            for (int j = 0; j < 9; j++) {
-                this.grid[i][j] = puzz.grid[i][j];
-            }
-        }
     }
 }
