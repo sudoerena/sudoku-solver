@@ -1,3 +1,5 @@
+package sudoku;
+
 import java.util.*;
 import java.io.*;
 import java.lang.*;
@@ -6,6 +8,23 @@ public class Solver {
     Puzzle puzz;
     //int invalid[][][];
     int invalid[][][] = new int[9][9][10];
+
+    public static void main (String args[]) {
+        if (args.length == 1) {
+            Puzzle puzz = new Puzzle(args[0]);
+            Solver slv = new Solver(puzz);
+
+            slv.solve();
+            slv.print();
+        }
+        else {
+            Scanner sc = new Scanner(System.in);
+            Solver slv = new Solver();
+            System.out.println("here");
+            slv.solve();
+            slv.print();
+        }
+    }
 
     Solver () {
         Scanner sc = new Scanner(System.in);
