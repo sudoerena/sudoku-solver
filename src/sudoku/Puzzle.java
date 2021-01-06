@@ -11,20 +11,26 @@ public class Puzzle {
         grid = new int[9][9];
     }
 
-    Puzzle (int num) {
-        grid = new int[num][num];
-    }
-
     Puzzle (Puzzle puzz) {
         this.grid = new int[9][9];
 
         this.copy(puzz);
     }
 
-    Puzzle (String name) {
+    Puzzle (String nums) {
+        grid = new int[9][9];
+
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                grid[i][j] = nums.charAt(9*i + j) - '0';
+            }
+        }
+    }
+
+    // FIX
+    Puzzle (String name, String path) {
         grid = new int[9][9];
         if (!readFile(name));
-        // FIX
     }
 
     private boolean readFile (String name) {

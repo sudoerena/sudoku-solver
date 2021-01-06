@@ -6,14 +6,15 @@ import java.lang.*;
 
 public class Solver {
     Puzzle puzz;
-    //int invalid[][][];
     int invalid[][][] = new int[9][9][10];
 
+    // initially took file name as input, revised to take a string of all vals
     public static void main (String args[]) {
         if (args.length == 1) {
             Puzzle puzz = new Puzzle(args[0]);
             Solver slv = new Solver(puzz);
 
+            slv.print();
             slv.solve();
             slv.print();
         }
@@ -45,8 +46,7 @@ public class Solver {
             puzz = new Puzzle(sc.nextLine());
         }
         else if (in == 2) {
-            System.out.print("Puzzle size: ");
-            puzz = new Puzzle(sc.nextInt());
+            puzz = new Puzzle();
 
             System.out.println("Enter number, or 0 for empty.");
             for (int i = 0; i < 9; i++) {
